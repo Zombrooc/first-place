@@ -5,6 +5,53 @@ import { CSVLink } from "react-csv";
 
 import * as XLSX from 'xlsx/xlsx.mjs';
 
+function expandClassification(value) {
+  const cleaned = value.trim();
+  if (isNaN(parseInt(cleaned[0]))) return [cleaned];
+
+  if (cleaned.includes(',')) {
+    return cleaned.split(',').map(x => x.trim());
+  }
+
+  if (cleaned.includes('-')) {
+    const [begin, end] = cleaned.split('-').map(x => parseInt(x.trim()));
+    const results = [];
+    for (let i = begin; i <= end; i++) results.push(`${String(i)}º`);
+    return results;
+  }
+
+  return [cleaned];
+}
+
+const expandCategory = (category) => {
+
+  if (!category) return [];
+
+  if (!category.includes("|")) {
+    return category.split("/").map(c => c.trim())
+  }
+
+  const blocks = category.split('|').map(block =>
+    block.split('/').map(sub => sub.trim())
+  );
+
+  return cartesianProduct(blocks).map(combination =>
+    combination.join(' ')
+  );
+}
+
+function cartesianProduct(arrays) {
+  return arrays.reduce((acc, curr) => {
+    const results = [];
+    acc.forEach(a => {
+      curr.forEach(b => {
+        results.push([...a, b]);
+      });
+    });
+    return results;
+  }, [[]]);
+}
+
 function App() {
 
   const [xlslFile, setXlslFile] = useState(null);
@@ -24,32 +71,57 @@ function App() {
 
     let csvContent = [["classification", "category"]]
 
-    fileContent.map(({ quantityForEachClassifiction, quantity, classification, nomenclature, category }, index) => {
-      let csvLine = [];
+    // fileContent.map(({ quantityForEachClassifiction, quantity, classification, nomenclature, category }, index) => {
+    //   let csvLine = [];
 
-      const splitedCategory = category.split('|')
 
-      const categoryPrefix = splitedCategory[0]
-      const splitedCategoryValue = splitedCategory[1].split('/')
 
-      if (classification.includes('-')) {
-        const splitedClassification = classification.split('-');
+    //   const splitedCategory = category.includes('|') ?? category.split('|')
 
-        const classificationStartPoint = splitedClassification[0].trim();
-        const classificationEndPoint = splitedClassification[1].trim();
+    //   const categoryPrefix = splitedCategory[0]
+    //   const splitedCategoryValue = splitedCategory[1].split('/')
 
-        for (let i = classificationStartPoint; i <= classificationEndPoint; i++) {
-          splitedCategoryValue.forEach(categoryValue => {
-            for (let x = 0; x < quantityForEachClassifiction; x++) {
-              console.log('Classificação: ', `${i}º ${nomenclature}${categoryValue ? ` - ${categoryPrefix || ""}${categoryValue.trim()}` : ""}`)
+    //   if (classification.includes('-')) {
+    //     const splitedClassification = classification.split('-');
 
-              csvContent.push([`${i}º ${nomenclature}`, `${categoryValue ? ` - ${categoryPrefix || ""}${categoryValue.trim()}` : ""}`]);
-            }
+    //     const classificationStartPoint = splitedClassification[0].trim();
+    //     const classificationEndPoint = splitedClassification[1].trim();
 
+    //     for (let i = classificationStartPoint; i <= classificationEndPoint; i++) {
+    //       splitedCategoryValue.forEach(categoryValue => {
+    //         for (let x = 0; x < quantityForEachClassifiction; x++) {
+    //           console.log('Classificação: ', `${i}º ${nomenclature}${categoryValue ? ` - ${categoryPrefix || ""}${categoryValue.trim()}` : ""}`)
+
+    //           csvContent.push([`${i}º ${nomenclature}`, `${categoryValue ? `${categoryPrefix || ""}${categoryValue.trim()}` : ""}`]);
+    //         }
+
+    //       })
+    //     }
+    //   }
+    //   return csvLine
+    // })
+
+    fileContent.map(({ quantityForEachClassification, classification, category, nomenclature = '', ...rest }) => {
+      const expandedClassifications = expandClassification(classification)
+
+      const expandedCategories = expandCategory(category);
+
+      // expandedClassifications.forEach(classificationValue => {
+      //   expandedCategories.forEach(categoryValue => {
+      //     for (let x = 0; x < quantityForEachClassification; x++) {
+      //       console.log(`${classificationValue} ${nomenclature}`, `${categoryValue}`)
+      //       csvContent.push([`${classificationValue} ${nomenclature}`, `${categoryValue}`])
+      //     }
+      //   })
+      // })
+      for (let x = 0; x < quantityForEachClassification; x++) {
+        expandedCategories.forEach(categoryValue => {
+          expandedClassifications.forEach(classificationValue => {
+            console.log(`${classificationValue} ${nomenclature}`, `${categoryValue}`)
+            csvContent.push([`${classificationValue} ${nomenclature}`, `${categoryValue}`])
           })
-        }
+        })
       }
-      return csvLine
     })
 
     setCSVContent(csvContent)
@@ -59,9 +131,8 @@ function App() {
 
     <>
       <form onSubmit={handleFileInput}>
-
         <input type="file" accept=".xlsx" onChange={(e) => handleFileChanges(e.target.files)} />
-        <button type="submit">Submit</button>
+        <button type="submit">Processar</button>
       </form>
 
       {csvContent && (
@@ -71,7 +142,7 @@ function App() {
           className="btn btn-primary"
           target="_blank"
         >
-          Download me
+          Baixar CSV
         </CSVLink>
       )}
     </>
