@@ -211,8 +211,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 6.8.2
-   * Query Engine version: 2060c79ba17c6bb9f5823312b6f6b7f4a845738e
+   * Prisma Client JS version: 6.9.0
+   * Query Engine version: 81e4af48011447c3cc503a190e86995b66d2a28e
    */
   export type PrismaVersion = {
     client: string
@@ -875,22 +875,32 @@ export namespace Prisma {
 
   export type AggregateClassification = {
     _count: ClassificationCountAggregateOutputType | null
+    _avg: ClassificationAvgAggregateOutputType | null
+    _sum: ClassificationSumAggregateOutputType | null
     _min: ClassificationMinAggregateOutputType | null
     _max: ClassificationMaxAggregateOutputType | null
   }
 
+  export type ClassificationAvgAggregateOutputType = {
+    fileSize: number | null
+  }
+
+  export type ClassificationSumAggregateOutputType = {
+    fileSize: number | null
+  }
+
   export type ClassificationMinAggregateOutputType = {
     id: string | null
-    csvContent: string | null
     fileName: string | null
+    fileSize: number | null
     createdAt: Date | null
     updatedAt: Date | null
   }
 
   export type ClassificationMaxAggregateOutputType = {
     id: string | null
-    csvContent: string | null
     fileName: string | null
+    fileSize: number | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -899,24 +909,33 @@ export namespace Prisma {
     id: number
     csvContent: number
     fileName: number
+    fileSize: number
     createdAt: number
     updatedAt: number
     _all: number
   }
 
 
+  export type ClassificationAvgAggregateInputType = {
+    fileSize?: true
+  }
+
+  export type ClassificationSumAggregateInputType = {
+    fileSize?: true
+  }
+
   export type ClassificationMinAggregateInputType = {
     id?: true
-    csvContent?: true
     fileName?: true
+    fileSize?: true
     createdAt?: true
     updatedAt?: true
   }
 
   export type ClassificationMaxAggregateInputType = {
     id?: true
-    csvContent?: true
     fileName?: true
+    fileSize?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -925,6 +944,7 @@ export namespace Prisma {
     id?: true
     csvContent?: true
     fileName?: true
+    fileSize?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -968,6 +988,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: ClassificationAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ClassificationSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: ClassificationMinAggregateInputType
@@ -998,17 +1030,22 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: ClassificationCountAggregateInputType | true
+    _avg?: ClassificationAvgAggregateInputType
+    _sum?: ClassificationSumAggregateInputType
     _min?: ClassificationMinAggregateInputType
     _max?: ClassificationMaxAggregateInputType
   }
 
   export type ClassificationGroupByOutputType = {
     id: string
-    csvContent: string
+    csvContent: JsonValue
     fileName: string
+    fileSize: number
     createdAt: Date
     updatedAt: Date
     _count: ClassificationCountAggregateOutputType | null
+    _avg: ClassificationAvgAggregateOutputType | null
+    _sum: ClassificationSumAggregateOutputType | null
     _min: ClassificationMinAggregateOutputType | null
     _max: ClassificationMaxAggregateOutputType | null
   }
@@ -1031,6 +1068,7 @@ export namespace Prisma {
     id?: boolean
     csvContent?: boolean
     fileName?: boolean
+    fileSize?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["classification"]>
@@ -1039,6 +1077,7 @@ export namespace Prisma {
     id?: boolean
     csvContent?: boolean
     fileName?: boolean
+    fileSize?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["classification"]>
@@ -1047,6 +1086,7 @@ export namespace Prisma {
     id?: boolean
     csvContent?: boolean
     fileName?: boolean
+    fileSize?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["classification"]>
@@ -1055,19 +1095,21 @@ export namespace Prisma {
     id?: boolean
     csvContent?: boolean
     fileName?: boolean
+    fileSize?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type ClassificationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "csvContent" | "fileName" | "createdAt" | "updatedAt", ExtArgs["result"]["classification"]>
+  export type ClassificationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "csvContent" | "fileName" | "fileSize" | "createdAt" | "updatedAt", ExtArgs["result"]["classification"]>
 
   export type $ClassificationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Classification"
     objects: {}
     scalars: $Extensions.GetPayloadResult<{
       id: string
-      csvContent: string
+      csvContent: Prisma.JsonValue
       fileName: string
+      fileSize: number
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["classification"]>
@@ -1494,8 +1536,9 @@ export namespace Prisma {
    */
   interface ClassificationFieldRefs {
     readonly id: FieldRef<"Classification", 'String'>
-    readonly csvContent: FieldRef<"Classification", 'String'>
+    readonly csvContent: FieldRef<"Classification", 'Json'>
     readonly fileName: FieldRef<"Classification", 'String'>
+    readonly fileSize: FieldRef<"Classification", 'Int'>
     readonly createdAt: FieldRef<"Classification", 'DateTime'>
     readonly updatedAt: FieldRef<"Classification", 'DateTime'>
   }
@@ -1882,6 +1925,7 @@ export namespace Prisma {
     id: 'id',
     csvContent: 'csvContent',
     fileName: 'fileName',
+    fileSize: 'fileSize',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -1897,12 +1941,28 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+  export const JsonNullValueInput: {
+    JsonNull: typeof JsonNull
+  };
+
+  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
   export const QueryMode: {
     default: 'default',
     insensitive: 'insensitive'
   };
 
   export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+  export const JsonNullValueFilter: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull,
+    AnyNull: typeof AnyNull
+  };
+
+  export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
   /**
@@ -1925,16 +1985,16 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'DateTime'
+   * Reference to a field of type 'Json'
    */
-  export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
     
 
 
   /**
-   * Reference to a field of type 'DateTime[]'
+   * Reference to a field of type 'QueryMode'
    */
-  export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+  export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -1950,6 +2010,34 @@ export namespace Prisma {
    */
   export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
+
+
+  /**
+   * Reference to a field of type 'DateTime'
+   */
+  export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime[]'
+   */
+  export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float'
+   */
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float[]'
+   */
+  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
   /**
    * Deep Input Types
    */
@@ -1960,8 +2048,9 @@ export namespace Prisma {
     OR?: ClassificationWhereInput[]
     NOT?: ClassificationWhereInput | ClassificationWhereInput[]
     id?: StringFilter<"Classification"> | string
-    csvContent?: StringFilter<"Classification"> | string
+    csvContent?: JsonFilter<"Classification">
     fileName?: StringFilter<"Classification"> | string
+    fileSize?: IntFilter<"Classification"> | number
     createdAt?: DateTimeFilter<"Classification"> | Date | string
     updatedAt?: DateTimeFilter<"Classification"> | Date | string
   }
@@ -1970,6 +2059,7 @@ export namespace Prisma {
     id?: SortOrder
     csvContent?: SortOrder
     fileName?: SortOrder
+    fileSize?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -1979,8 +2069,9 @@ export namespace Prisma {
     AND?: ClassificationWhereInput | ClassificationWhereInput[]
     OR?: ClassificationWhereInput[]
     NOT?: ClassificationWhereInput | ClassificationWhereInput[]
-    csvContent?: StringFilter<"Classification"> | string
+    csvContent?: JsonFilter<"Classification">
     fileName?: StringFilter<"Classification"> | string
+    fileSize?: IntFilter<"Classification"> | number
     createdAt?: DateTimeFilter<"Classification"> | Date | string
     updatedAt?: DateTimeFilter<"Classification"> | Date | string
   }, "id">
@@ -1989,11 +2080,14 @@ export namespace Prisma {
     id?: SortOrder
     csvContent?: SortOrder
     fileName?: SortOrder
+    fileSize?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: ClassificationCountOrderByAggregateInput
+    _avg?: ClassificationAvgOrderByAggregateInput
     _max?: ClassificationMaxOrderByAggregateInput
     _min?: ClassificationMinOrderByAggregateInput
+    _sum?: ClassificationSumOrderByAggregateInput
   }
 
   export type ClassificationScalarWhereWithAggregatesInput = {
@@ -2001,64 +2095,72 @@ export namespace Prisma {
     OR?: ClassificationScalarWhereWithAggregatesInput[]
     NOT?: ClassificationScalarWhereWithAggregatesInput | ClassificationScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Classification"> | string
-    csvContent?: StringWithAggregatesFilter<"Classification"> | string
+    csvContent?: JsonWithAggregatesFilter<"Classification">
     fileName?: StringWithAggregatesFilter<"Classification"> | string
+    fileSize?: IntWithAggregatesFilter<"Classification"> | number
     createdAt?: DateTimeWithAggregatesFilter<"Classification"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Classification"> | Date | string
   }
 
   export type ClassificationCreateInput = {
     id?: string
-    csvContent: string
+    csvContent: JsonNullValueInput | InputJsonValue
     fileName: string
+    fileSize: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
 
   export type ClassificationUncheckedCreateInput = {
     id?: string
-    csvContent: string
+    csvContent: JsonNullValueInput | InputJsonValue
     fileName: string
+    fileSize: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
 
   export type ClassificationUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    csvContent?: StringFieldUpdateOperationsInput | string
+    csvContent?: JsonNullValueInput | InputJsonValue
     fileName?: StringFieldUpdateOperationsInput | string
+    fileSize?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ClassificationUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    csvContent?: StringFieldUpdateOperationsInput | string
+    csvContent?: JsonNullValueInput | InputJsonValue
     fileName?: StringFieldUpdateOperationsInput | string
+    fileSize?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ClassificationCreateManyInput = {
     id?: string
-    csvContent: string
+    csvContent: JsonNullValueInput | InputJsonValue
     fileName: string
+    fileSize: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
 
   export type ClassificationUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    csvContent?: StringFieldUpdateOperationsInput | string
+    csvContent?: JsonNullValueInput | InputJsonValue
     fileName?: StringFieldUpdateOperationsInput | string
+    fileSize?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ClassificationUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
-    csvContent?: StringFieldUpdateOperationsInput | string
+    csvContent?: JsonNullValueInput | InputJsonValue
     fileName?: StringFieldUpdateOperationsInput | string
+    fileSize?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -2077,6 +2179,40 @@ export namespace Prisma {
     mode?: QueryMode
     not?: NestedStringFilter<$PrismaModel> | string
   }
+  export type JsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
 
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
@@ -2093,24 +2229,33 @@ export namespace Prisma {
     id?: SortOrder
     csvContent?: SortOrder
     fileName?: SortOrder
+    fileSize?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
+  export type ClassificationAvgOrderByAggregateInput = {
+    fileSize?: SortOrder
+  }
+
   export type ClassificationMaxOrderByAggregateInput = {
     id?: SortOrder
-    csvContent?: SortOrder
     fileName?: SortOrder
+    fileSize?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type ClassificationMinOrderByAggregateInput = {
     id?: SortOrder
-    csvContent?: SortOrder
     fileName?: SortOrder
+    fileSize?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type ClassificationSumOrderByAggregateInput = {
+    fileSize?: SortOrder
   }
 
   export type StringWithAggregatesFilter<$PrismaModel = never> = {
@@ -2129,6 +2274,48 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedStringFilter<$PrismaModel>
     _max?: NestedStringFilter<$PrismaModel>
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
   }
 
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -2149,6 +2336,14 @@ export namespace Prisma {
     set?: string
   }
 
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
   }
@@ -2165,6 +2360,17 @@ export namespace Prisma {
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     not?: NestedStringFilter<$PrismaModel> | string
+  }
+
+  export type NestedIntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
   }
 
   export type NestedDateTimeFilter<$PrismaModel = never> = {
@@ -2194,8 +2400,31 @@ export namespace Prisma {
     _min?: NestedStringFilter<$PrismaModel>
     _max?: NestedStringFilter<$PrismaModel>
   }
+  export type NestedJsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
 
-  export type NestedIntFilter<$PrismaModel = never> = {
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
     notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -2203,7 +2432,23 @@ export namespace Prisma {
     lte?: number | IntFieldRefInput<$PrismaModel>
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntFilter<$PrismaModel> | number
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
   }
 
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {

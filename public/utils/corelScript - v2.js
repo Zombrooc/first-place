@@ -32,7 +32,7 @@ for (var i = host.ActiveDocument.Pages.Count; i > 1; i--) {
   var currentPageShapes = currentPage.Shapes.All();
 
   // Process the text box on this page
-  if (currentPageShapes.Count > 0) {
+  if (currentPageShapes.Count >= 0) {
     // Select all shapes on current page
     currentPageShapes.CreateSelection();
 
