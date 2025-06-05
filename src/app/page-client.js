@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -68,75 +68,42 @@ export default function ClassificationClientPage() {
 
     setIsUploading(true);
 
-    // Simulate file upload process
     try {
-      const csvContent = await new Promise(async (resolve) => {
-        const data = await selectedFile.arrayBuffer();
-        const workbook = XLSX.read(data);
 
+
+      const data = await selectedFile.arrayBuffer();
+      const workbook = XLSX.read(data);
+
+      // console.log("Sheets: ",
+      //   workbook.SheetNames
+      // )
+
+      let fileList = [];
+
+      workbook.SheetNames.forEach((sheet, i) => {
         const fileContent = XLSX.utils.sheet_to_json(
-          workbook.Sheets[workbook.SheetNames[0]]
+          workbook.Sheets[workbook.SheetNames[i]]
         );
 
         const csvContent = [["classification", "category"]];
-
-        // fileContent.map(({ quantityForEachClassifiction, quantity, classification, nomenclature, category }, index) => {
-        //   let csvLine = [];
-
-        //   const splitedCategory = category.includes('|') ?? category.split('|')
-
-        //   const categoryPrefix = splitedCategory[0]
-        //   const splitedCategoryValue = splitedCategory[1].split('/')
-
-        //   if (classification.includes('-')) {
-        //     const splitedClassification = classification.split('-');
-
-        //     const classificationStartPoint = splitedClassification[0].trim();
-        //     const classificationEndPoint = splitedClassification[1].trim();
-
-        //     for (let i = classificationStartPoint; i <= classificationEndPoint; i++) {
-        //       splitedCategoryValue.forEach(categoryValue => {
-        //         for (let x = 0; x < quantityForEachClassifiction; x++) {
-        //           console.log('Classificação: ', `${i}º ${nomenclature}${categoryValue ? ` - ${categoryPrefix || ""}${categoryValue.trim()}` : ""}`)
-
-        //           csvContent.push([`${i}º ${nomenclature}`, `${categoryValue ? `${categoryPrefix || ""}${categoryValue.trim()}` : ""}`]);
-        //         }
-
-        //       })
-        //     }
-        //   }
-        //   return csvLine
-        // })
 
         fileContent.map(
           ({
             quantityForEachClassification,
             classification,
-            category,
+            category = "",
             nomenclature = "",
           }) => {
             const expandedClassifications =
               expandClassification(classification);
 
-            const expandedCategories = expandCategory(category);
+            const expandedCategories = expandCategory(category) || [];
 
-            // expandedClassifications.forEach(classificationValue => {
-            //   expandedCategories.forEach(categoryValue => {
-            //     for (let x = 0; x < quantityForEachClassification; x++) {
-            //       console.log(`${classificationValue} ${nomenclature}`, `${categoryValue}`)
-            //       csvContent.push([`${classificationValue} ${nomenclature}`, `${categoryValue}`])
-            //     }
-            //   })
-            // })
             for (let x = 0; x < quantityForEachClassification; x++) {
               expandedCategories.forEach((categoryValue) => {
                 expandedClassifications.forEach((classificationValue) => {
-                  // console.log(
-                  //   `${classificationValue} ${nomenclature}`,
-                  //   `${categoryValue}`
-                  // );
                   csvContent.push([
-                    `${classificationValue} ${nomenclature}`,
+                    `${classificationValue}\n${nomenclature}`,
                     `${categoryValue}`,
                   ]);
                 });
@@ -145,27 +112,80 @@ export default function ClassificationClientPage() {
           }
         );
 
-        // setCSVContent(csvContent);
-
-        resolve(csvContent);
+        fileList.push({ fileName: sheet, fileContent: csvContent })
       });
 
-      setUploadedFiles((prev) => [
-        ...prev,
-        {
-          fileName: selectedFile.name,
-          fileSize: selectedFile.size,
-          csvContent,
-        },
-      ]);
+      // const csvContent = await new Promise(async (resolve) => {
+      //   const data = await selectedFile.arrayBuffer();
+      //   const workbook = XLSX.read(data);
+
+      //   console.log("Sheets: ",
+      //     workbook.SheetNames
+      //   )
+
+      //   const fileContent = XLSX.utils.sheet_to_json(
+      //     workbook.Sheets[workbook.SheetNames[0]]
+      //   );
+
+      //   const csvContent = [["classification", "category"]];
+
+      //   fileContent.map(
+      //     ({
+      //       quantityForEachClassification,
+      //       classification,
+      //       category = "",
+      //       nomenclature = "",
+      //     }) => {
+      //       const expandedClassifications =
+      //         expandClassification(classification);
+
+      //       const expandedCategories = expandCategory(category) || [];
+
+      //       for (let x = 0; x < quantityForEachClassification; x++) {
+      //         expandedCategories.forEach((categoryValue) => {
+      //           expandedClassifications.forEach((classificationValue) => {
+      //             csvContent.push([
+      //               (`${classificationValue} ${nomenclature}`).trim(),
+      //               `${categoryValue}`,
+      //             ]);
+      //           });
+      //         });
+      //       }
+      //     }
+      //   );
+
+      //   // setCSVContent(csvContent);
+
+      //   resolve(csvContent);
+      // });
+
+      fileList.forEach(({ fileName, fileContent }) => {
+        setUploadedFiles((prev) => [
+          ...prev,
+          {
+            fileName: `${fileName}.csv`,
+            fileSize: new Blob([fileContent]).size,
+            csvContent: fileContent,
+          },
+        ])
+      })
+
+      // setUploadedFiles((prev) => [
+      //   ...prev,
+      //   {
+      //     fileName: selectedFile.name,
+      //     fileSize: selectedFile.size,
+      //     csvContent,
+      //   },
+      // ]);
 
       // const { success } = await addNewClassificationToDB({ selectedFile, csvContent });
 
-      if (success) {
-        toast("Envio bem-sucedido", {
-          description: `${selectedFile.name} foi processado com sucesso `,
-        });
-      }
+      // if (success) {
+      toast("Envio bem-sucedido", {
+        description: `${selectedFile.name} foi processado com sucesso `,
+      });
+      // }
 
       setSelectedFile(null);
 
