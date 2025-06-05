@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Download, FileText, X } from "lucide-react";
+import { Upload, Download, FileText, X, EyeIcon } from "lucide-react";
 
 import { toast } from "sonner";
 
@@ -26,25 +26,6 @@ export default function ClassificationClientPage() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
-  // const [csvContent, setCSVContent] = useState(null);
-
-  // useEffect(() => {
-  //   const fetchClassifications = async () => {
-  //     const { success, classifications } = await getClassificationsFromDB();
-
-  //     console.log('Classifications from DB: ', classifications)
-
-  //     if (success && classifications) {
-  //       setUploadedFiles(classifications);
-  //     } else {
-  //       toast.error("Erro ao carregar classificações", {
-  //         description: "Não foi possível carregar as classificações salvas.",
-  //       });
-  //     }
-  //   }
-
-  //   fetchClassifications();
-  // }, [])
 
   const handleFileSelect = (event) => {
     const file = event.target.files?.[0];
@@ -74,13 +55,11 @@ export default function ClassificationClientPage() {
       const data = await selectedFile.arrayBuffer();
       const workbook = XLSX.read(data);
 
-      // console.log("Sheets: ",
-      //   workbook.SheetNames
-      // )
-
       let fileList = [];
+      const validationText = []
 
       workbook.SheetNames.forEach((sheet, i) => {
+
         const fileContent = XLSX.utils.sheet_to_json(
           workbook.Sheets[workbook.SheetNames[i]]
         );
@@ -99,11 +78,16 @@ export default function ClassificationClientPage() {
 
             const expandedCategories = expandCategory(category) || [];
 
+            validationText.push([
+              `${classification} ${nomenclature} - ${category} --->  ${expandedCategories.length * expandedClassifications.length}\n`
+            ]);
+
             for (let x = 0; x < quantityForEachClassification; x++) {
               expandedCategories.forEach((categoryValue) => {
                 expandedClassifications.forEach((classificationValue) => {
+
                   csvContent.push([
-                    `${classificationValue}\n${nomenclature}`,
+                    `${classificationValue} ${nomenclature}`,
                     `${categoryValue}`,
                   ]);
                 });
@@ -112,8 +96,16 @@ export default function ClassificationClientPage() {
           }
         );
 
-        fileList.push({ fileName: sheet, fileContent: csvContent })
+        // console.log(`CSV Content from ${ sheet }: `, csvContent)
+
+        fileList.push({
+          fileName: sheet,
+          csvContent: csvContent,
+          fileSize: new Blob([fileContent]).size,
+        })
       });
+
+
 
       // const csvContent = await new Promise(async (resolve) => {
       //   const data = await selectedFile.arrayBuffer();
@@ -145,8 +137,8 @@ export default function ClassificationClientPage() {
       //         expandedCategories.forEach((categoryValue) => {
       //           expandedClassifications.forEach((classificationValue) => {
       //             csvContent.push([
-      //               (`${classificationValue} ${nomenclature}`).trim(),
-      //               `${categoryValue}`,
+      //               (`${ classificationValue } ${ nomenclature }`).trim(),
+      //               `${ categoryValue }`,
       //             ]);
       //           });
       //         });
@@ -159,16 +151,17 @@ export default function ClassificationClientPage() {
       //   resolve(csvContent);
       // });
 
-      fileList.forEach(({ fileName, fileContent }) => {
-        setUploadedFiles((prev) => [
-          ...prev,
-          {
-            fileName: `${fileName}.csv`,
-            fileSize: new Blob([fileContent]).size,
-            csvContent: fileContent,
-          },
-        ])
-      })
+      setUploadedFiles((prev) => [
+        ...prev,
+        ...fileList,
+        {
+          fileName: 'Arquivo de Conferencia.txt',
+          fileSize: new Blob([validationText]).size,
+          validationFile: URL.createObjectURL(new Blob([validationText.toString().replace('/,/', '')], {
+            type: "text/plain",
+            encoding: "UTF-8"
+          }))
+        }])
 
       // setUploadedFiles((prev) => [
       //   ...prev,
@@ -183,7 +176,7 @@ export default function ClassificationClientPage() {
 
       // if (success) {
       toast("Envio bem-sucedido", {
-        description: `${selectedFile.name} foi processado com sucesso `,
+        description: `${selectedFile.name} foi processado com sucesso`,
       });
       // }
 
@@ -219,7 +212,7 @@ export default function ClassificationClientPage() {
   //   URL.revokeObjectURL(url);
 
   //   toast("Download iniciado", {
-  //     description: `Baixando ${file.name}`,
+  //     description: `Baixando ${ file.name }`,
   //   });
   // };
 
@@ -324,7 +317,7 @@ export default function ClassificationClientPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {uploadedFiles.map(({ csvContent, fileName, fileSize }, index) => (
+                {uploadedFiles.map(({ csvContent, fileName, fileSize, validationFile }, index) => (
                   <div
                     key={index}
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
@@ -339,17 +332,36 @@ export default function ClassificationClientPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        // onClick={() => handleDownload(file)}
-                        asChild
-                      >
-                        <CSVLink data={csvContent} filename={`${fileName.split('.')[0]}.csv`} className="flex items-center">
-                          <Download className="w-4 h-4 mr-1" />
-                          Baixar
-                        </CSVLink>
-                      </Button>
+                      {csvContent && csvContent.length > 0 && (
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          // onClick={() => handleDownload(file)}
+                          asChild
+                        >
+                          <CSVLink data={csvContent} filename={`${fileName.split('.')[0]}.csv`} className="flex items-center">
+                            <Download className="w-4 h-4 mr-1" />
+                            Baixar
+                          </CSVLink>
+                        </Button>
+                      )}
+                      {validationFile && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          // onClick={() => handleDownload(file)}
+                          asChild
+                        >
+                          <a href={validationFile} download={`${fileName.split('.')[0]}.csv`} className="flex items-center">
+                            <Download className="w-4 h-4 mr-1" />
+                            Baixar
+                          </a>
+                        </Button>
+                      )}
+                      {/* <Button variant="outline" size="sm" asChild>
+                        <a href={validationFile} download={`CONFERENCIA ${fileName}.txt`} ><EyeIcon className="w-4 h-4 mr-1" /></a>
+                      </Button> */}
                       <Button
                         variant="outline"
                         size="sm"

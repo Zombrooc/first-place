@@ -7,7 +7,6 @@ function cn(...inputs) {
 
 function expandClassification(value) {
   const cleaned = value.trim();
-  if (isNaN(parseInt(cleaned[0]))) return [cleaned];
 
   if (cleaned.includes(",")) {
     return cleaned.split(",").map((x) => x.trim());
@@ -19,6 +18,8 @@ function expandClassification(value) {
     for (let i = begin; i <= end; i++) results.push(`${String(i)}º`);
     return results;
   }
+
+  if (isNaN(parseInt(cleaned[0]))) return [cleaned];
 
   return [cleaned];
 }
