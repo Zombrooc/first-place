@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Download, FileText, X, EyeIcon } from "lucide-react";
+import { Upload, Download, FileText, X } from "lucide-react";
 
 import { toast } from "sonner";
 
@@ -96,8 +96,6 @@ export default function ClassificationClientPage() {
           }
         );
 
-        // console.log(`CSV Content from ${ sheet }: `, csvContent)
-
         fileList.push({
           fileName: sheet,
           csvContent: csvContent,
@@ -105,51 +103,6 @@ export default function ClassificationClientPage() {
         })
       });
 
-
-
-      // const csvContent = await new Promise(async (resolve) => {
-      //   const data = await selectedFile.arrayBuffer();
-      //   const workbook = XLSX.read(data);
-
-      //   console.log("Sheets: ",
-      //     workbook.SheetNames
-      //   )
-
-      //   const fileContent = XLSX.utils.sheet_to_json(
-      //     workbook.Sheets[workbook.SheetNames[0]]
-      //   );
-
-      //   const csvContent = [["classification", "category"]];
-
-      //   fileContent.map(
-      //     ({
-      //       quantityForEachClassification,
-      //       classification,
-      //       category = "",
-      //       nomenclature = "",
-      //     }) => {
-      //       const expandedClassifications =
-      //         expandClassification(classification);
-
-      //       const expandedCategories = expandCategory(category) || [];
-
-      //       for (let x = 0; x < quantityForEachClassification; x++) {
-      //         expandedCategories.forEach((categoryValue) => {
-      //           expandedClassifications.forEach((classificationValue) => {
-      //             csvContent.push([
-      //               (`${ classificationValue } ${ nomenclature }`).trim(),
-      //               `${ categoryValue }`,
-      //             ]);
-      //           });
-      //         });
-      //       }
-      //     }
-      //   );
-
-      //   // setCSVContent(csvContent);
-
-      //   resolve(csvContent);
-      // });
 
       setUploadedFiles((prev) => [
         ...prev,
@@ -163,18 +116,6 @@ export default function ClassificationClientPage() {
           }))
         }])
 
-      // setUploadedFiles((prev) => [
-      //   ...prev,
-      //   {
-      //     fileName: selectedFile.name,
-      //     fileSize: selectedFile.size,
-      //     csvContent,
-      //   },
-      // ]);
-
-      // const { success } = await addNewClassificationToDB({ selectedFile, csvContent });
-
-      // if (success) {
       toast("Envio bem-sucedido", {
         description: `${selectedFile.name} foi processado com sucesso`,
       });
@@ -200,21 +141,6 @@ export default function ClassificationClientPage() {
       setIsUploading(false);
     }
   };
-
-  // const handleDownload = (file) => {
-  //   const url = URL.createObjectURL(file);
-  //   const a = document.createElement("a");
-  //   a.href = url;
-  //   a.download = file.name;
-  //   document.body.appendChild(a);
-  //   a.click();
-  //   document.body.removeChild(a);
-  //   URL.revokeObjectURL(url);
-
-  //   toast("Download iniciado", {
-  //     description: `Baixando ${ file.name }`,
-  //   });
-  // };
 
   const removeFile = (index) => {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
@@ -350,10 +276,9 @@ export default function ClassificationClientPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          // onClick={() => handleDownload(file)}
                           asChild
                         >
-                          <a href={validationFile} download={`${fileName.split('.')[0]}.csv`} className="flex items-center">
+                          <a href={validationFile} download={`${fileName.split('.')[0]}.txt`} className="flex items-center">
                             <Download className="w-4 h-4 mr-1" />
                             Baixar
                           </a>
