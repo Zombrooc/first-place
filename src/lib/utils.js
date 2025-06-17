@@ -13,6 +13,8 @@ function expandClassification(value) {
   }
 
   if (cleaned.includes("-")) {
+
+    console.log('Cleaned')
     const [begin, end] = cleaned.split("-").map((x) => parseInt(x.trim()));
     const results = [];
     for (let i = begin; i <= end; i++) results.push(`${String(i)}º`);
