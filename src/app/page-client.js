@@ -79,7 +79,7 @@ export default function ClassificationClientPage() {
             const expandedCategories = expandCategory(category) || [];
 
             validationText.push([
-              `${classification} ${nomenclature} - ${category} --->  ${expandedCategories.length * expandedClassifications.length}\n`
+              `${classification}${nomenclature ? " " : ""}${nomenclature} - ${category} --->  ${expandedCategories.length * expandedClassifications.length}\n`
             ]);
 
             for (let x = 0; x < quantityForEachClassification; x++) {
@@ -87,7 +87,7 @@ export default function ClassificationClientPage() {
                 expandedClassifications.forEach((classificationValue) => {
 
                   csvContent.push([
-                    `${classificationValue} ${nomenclature}`,
+                    `${classificationValue}${nomenclature ? " " : ""}${nomenclature}`,
                     `${categoryValue}`,
                   ]);
                 });
