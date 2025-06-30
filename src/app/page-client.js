@@ -14,11 +14,9 @@ import { Label } from "@/components/ui/label";
 import { Upload, Download, FileText, X } from "lucide-react";
 
 import { toast } from "sonner";
-
-import { table } from 'table';
+import PDFDocument from 'pdfkit/js/pdfkit.standalone.js';
 import { CSVLink } from "react-csv";
-
-// import rtf from "node-rtf"
+import blobStream from 'blob-stream';
 
 import * as XLSX from "xlsx/xlsx.mjs";
 import { expandCategory, expandClassification } from "@/lib/utils";
@@ -116,8 +114,6 @@ export default function ClassificationClientPage() {
           }
         );
 
-        console.log(csvContent)
-
         fileList.push({
           fileName: sheet,
           csvContent: csvContent,
@@ -125,78 +121,45 @@ export default function ClassificationClientPage() {
         })
       });
 
-      // const validationFile = new rtf();
+      const doc = new PDFDocument();
 
-      // validationFile.orientation = "landscape";
+      const stream = doc.pipe(blobStream());
 
-      // // let red_underline = new Format()
-      // // let blue_strike = new Format()
-      // // let green_bold = new Format()
-      // // let maroon_super = new Format()
-      // // let gray_sub = new Format()
-      // // let lime_indent = new Format()
-      // // let custom_blue = new Format();
+      doc.table({
+        data: validationText
+      });
 
-      // validationFile.writeText("Red underlined");
-      // validationFile.addLine();
-      // validationFile.writeText("Strikeout Blue");
-      // validationFile.addLine();
-      // validationFile.writeText("Bold Green");
-      // validationFile.addLine();
-      // validationFile.writeText("Superscripted Maroon");
-      // validationFile.addLine();
-      // validationFile.writeText("Subscripted Gray");
-      // validationFile.addLine();
-      // validationFile.writeText("Left indented Lime");
-      // validationFile.addLine();
-
-      // validationFile.writeText("Custom blue color");
-
-      // validationFile.createDocument(
-      //   function (err, output) {
-      //     if (err) return console.log(err)
-      //     console.log(output)
-      //     console.log('RTF Download URL: ', URL.createObjectURL(new Blob([output])))
+      doc.end();
 
 
-      //     // fs.writeFile('formatting.rtf', output, function (err) {
-      //     //   if (err) return console.log(err);
-      //     // });
-      //   }
-      // );
+      stream.on('finish', function () {
+        const blob = stream.toBlob('application/pdf');
 
+        let validationFileURL = stream.toBlobURL('application/pdf');
 
-
-      console.log([table(validationText, {
-        columnDefault: {
-          width: 50,
-          truncate: 49,
-          wrapWord: true
-        }
-
-      })])
-
-      setUploadedFiles((prev) => {
-        return [
-          ...prev,
-          ...fileList,
-          {
-            fileName: 'Arquivo de Conferencia.txt',
-            fileSize: new Blob([validationText]).size,
-            // validationFile: URL.createObjectURL(new Blob([validationText.toString().replace('/,/', '').replace("\"", "")], {
-            //   type: "text/plain",
-            //   encoding: "UTF-8"
-            // }))
-            validationFile: URL.createObjectURL(new Blob([table(validationText, {
-              columnDefault: {
-                width: 50,
-                truncate: 49,
-                wrapWord: true
-              }
-            })]))
-          }
-        ];
-      })
+        setUploadedFiles((prev) => {
+          return [
+            ...prev,
+            ...fileList,
+            {
+              fileName: 'Arquivo de Conferencia.txt',
+              fileSize: new Blob([validationText]).size,
+              // validationFile: URL.createObjectURL(new Blob([validationText.toString().replace('/,/', '').replace("\"", "")], {
+              //   type: "text/plain",
+              //   encoding: "UTF-8"
+              // }))
+              // validationFile: URL.createObjectURL(new Blob([table(validationText, {
+              //   columnDefault: {
+              //     width: 50,
+              //     truncate: 49,
+              //     wrapWord: true
+              //   }
+              // }
+              validationFile: validationFileURL
+            }
+          ];
+        })
+      });
 
       toast("Envio bem-sucedido", {
         description: `${selectedFile.name} foi processado com sucesso`,
@@ -248,9 +211,6 @@ export default function ClassificationClientPage() {
           <h1 className="text-3xl font-bold text-gray-900">
             Gerador de Classificações
           </h1>
-          {/* <p className="text-gray-600 mt-2">
-            Upload, manage, and download your files
-          </p> */}
         </div>
 
         {/* Upload Section */}
@@ -360,7 +320,7 @@ export default function ClassificationClientPage() {
                           size="sm"
                           asChild
                         >
-                          <a href={validationFile} download={`${fileName.split('.')[0]}.txt`} className="flex items-center">
+                          <a href={validationFile} download={`${fileName.split('.')[0]}.pdf`} className="flex items-center">
                             <Download className="w-4 h-4 mr-1" />
                             Baixar
                           </a>
