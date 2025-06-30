@@ -15,17 +15,23 @@ import { Upload, Download, FileText, X } from "lucide-react";
 
 import { toast } from "sonner";
 
+import { table } from 'table';
 import { CSVLink } from "react-csv";
+
+// import rtf from "node-rtf"
 
 import * as XLSX from "xlsx/xlsx.mjs";
 import { expandCategory, expandClassification } from "@/lib/utils";
 // import { addNewClassificationToDB } from "./_actions/classificationActions";
+// import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 
 // export default function ClassificationClientPage({ classificationStatus, classifications }) {
 export default function ClassificationClientPage() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+
+
 
   const handleFileSelect = (event) => {
     const file = event.target.files?.[0];
@@ -56,7 +62,7 @@ export default function ClassificationClientPage() {
       const workbook = XLSX.read(data);
 
       let fileList = [];
-      const validationText = []
+      const validationText = [["Classificação", "Categoria", "Quantidade"]]
 
       workbook.SheetNames.forEach((sheet, i) => {
 
@@ -78,23 +84,39 @@ export default function ClassificationClientPage() {
 
             const expandedCategories = expandCategory(category) || [];
 
-            validationText.push([
-              `${classification}${nomenclature ? " " : ""}${nomenclature} - ${category} --->  ${expandedCategories.length * expandedClassifications.length}\n`
-            ]);
+            const classificationQuantity = expandedCategories.length === 0 ? expandedClassifications.length : expandedCategories.length * expandedClassifications.length;
+
+            // validationText.push([
+            //   `${classification}${nomenclature ? " " : ""}${nomenclature} - ${category} --->  ${classificationQuantity}\n`
+            // ]);
+
+            validationText.push([`${classification}${nomenclature ? " " : ""}${nomenclature}`, `${category}`, `${classificationQuantity}`]);
 
             for (let x = 0; x < quantityForEachClassification; x++) {
-              expandedCategories.forEach((categoryValue) => {
+              if (expandedCategories.length === 0) {
+                console.log('Chegou aqui')
                 expandedClassifications.forEach((classificationValue) => {
-
                   csvContent.push([
                     `${classificationValue}${nomenclature ? " " : ""}${nomenclature}`,
-                    `${categoryValue}`,
+                    "",
                   ]);
+                }
+                );
+              } else {
+                expandedCategories.forEach((categoryValue) => {
+                  expandedClassifications.forEach((classificationValue) => {
+                    csvContent.push([
+                      `${classificationValue}${nomenclature ? " " : ""}${nomenclature}`,
+                      `${categoryValue}`,
+                    ]);
+                  });
                 });
-              });
+              }
             }
           }
         );
+
+        console.log(csvContent)
 
         fileList.push({
           fileName: sheet,
@@ -103,18 +125,78 @@ export default function ClassificationClientPage() {
         })
       });
 
+      // const validationFile = new rtf();
 
-      setUploadedFiles((prev) => [
-        ...prev,
-        ...fileList,
-        {
-          fileName: 'Arquivo de Conferencia.txt',
-          fileSize: new Blob([validationText]).size,
-          validationFile: URL.createObjectURL(new Blob([validationText.toString().replace('/,/', '')], {
-            type: "text/plain",
-            encoding: "UTF-8"
-          }))
-        }])
+      // validationFile.orientation = "landscape";
+
+      // // let red_underline = new Format()
+      // // let blue_strike = new Format()
+      // // let green_bold = new Format()
+      // // let maroon_super = new Format()
+      // // let gray_sub = new Format()
+      // // let lime_indent = new Format()
+      // // let custom_blue = new Format();
+
+      // validationFile.writeText("Red underlined");
+      // validationFile.addLine();
+      // validationFile.writeText("Strikeout Blue");
+      // validationFile.addLine();
+      // validationFile.writeText("Bold Green");
+      // validationFile.addLine();
+      // validationFile.writeText("Superscripted Maroon");
+      // validationFile.addLine();
+      // validationFile.writeText("Subscripted Gray");
+      // validationFile.addLine();
+      // validationFile.writeText("Left indented Lime");
+      // validationFile.addLine();
+
+      // validationFile.writeText("Custom blue color");
+
+      // validationFile.createDocument(
+      //   function (err, output) {
+      //     if (err) return console.log(err)
+      //     console.log(output)
+      //     console.log('RTF Download URL: ', URL.createObjectURL(new Blob([output])))
+
+
+      //     // fs.writeFile('formatting.rtf', output, function (err) {
+      //     //   if (err) return console.log(err);
+      //     // });
+      //   }
+      // );
+
+
+
+      console.log([table(validationText, {
+        columnDefault: {
+          width: 50,
+          truncate: 49,
+          wrapWord: true
+        }
+
+      })])
+
+      setUploadedFiles((prev) => {
+        return [
+          ...prev,
+          ...fileList,
+          {
+            fileName: 'Arquivo de Conferencia.txt',
+            fileSize: new Blob([validationText]).size,
+            // validationFile: URL.createObjectURL(new Blob([validationText.toString().replace('/,/', '').replace("\"", "")], {
+            //   type: "text/plain",
+            //   encoding: "UTF-8"
+            // }))
+            validationFile: URL.createObjectURL(new Blob([table(validationText, {
+              columnDefault: {
+                width: 50,
+                truncate: 49,
+                wrapWord: true
+              }
+            })]))
+          }
+        ];
+      })
 
       toast("Envio bem-sucedido", {
         description: `${selectedFile.name} foi processado com sucesso`,
@@ -317,6 +399,7 @@ export default function ClassificationClientPage() {
           </Card>
         )}
       </div>
+
     </div>
   );
 }
