@@ -143,7 +143,7 @@ export default function ClassificationClientPage() {
             ...fileList,
             {
               fileName: 'Arquivo de Conferencia.txt',
-              fileSize: new Blob([validationText]).size,
+              fileSize: blob.size,
               // validationFile: URL.createObjectURL(new Blob([validationText.toString().replace('/,/', '').replace("\"", "")], {
               //   type: "text/plain",
               //   encoding: "UTF-8"
