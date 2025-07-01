@@ -37,7 +37,10 @@ const expandCategory = (category) => {
     .split("|")
     .map((block) => block.split("/").map((sub) => sub.trim()));
 
-  return cartesianProduct(blocks).map((combination) => combination.join(" "));
+  const i = cartesianProduct(blocks).map((combination) => combination.join(" "));
+
+  console.log('Cartesian Product: ', i)
+  return i;
 };
 
 function cartesianProduct(arrays) {
