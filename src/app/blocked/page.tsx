@@ -48,11 +48,6 @@ export default function BlockedPlatform() {
               <ul className="space-y-2 text-sm text-gray-700">
                 <li className="flex items-start gap-2">
                   <span className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></span>
-                  A plataforma foi desenvolvida e entregue conforme
-                  especificações acordadas
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></span>
                   Tentativas de negociação para pagamento dos serviços prestados
                   foram realizadas
                 </li>

@@ -20,10 +20,7 @@ import blobStream from "blob-stream";
 
 import * as XLSX from "xlsx/xlsx.mjs";
 import { expandCategory, expandClassification } from "@/lib/utils";
-// import { addNewClassificationToDB } from "./_actions/classificationActions";
-// import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 
-// export default function ClassificationClientPage({ classificationStatus, classifications }) {
 export default function ClassificationClientPage() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -53,10 +50,15 @@ export default function ClassificationClientPage() {
 
     try {
       const data = await selectedFile.arrayBuffer();
+
+      const [fileName, fileExtension] = selectedFile.name.split(".");
+
       const workbook = XLSX.read(data);
 
       let fileList = [];
-      const validationText = [["Classificação", "Categoria", "Quantidade"]];
+      const validationText = [
+        ["Produto", "Classificação", "Categoria", "Quantidade"],
+      ];
 
       workbook.SheetNames.forEach((sheet, i) => {
         const fileContent = XLSX.utils.sheet_to_json(
@@ -71,9 +73,12 @@ export default function ClassificationClientPage() {
             classification,
             category = "",
             nomenclature = "",
+            productType,
           }) => {
-            const expandedClassifications =
-              expandClassification(classification);
+            const expandedClassifications = expandClassification(
+              classification,
+              nomenclature
+            );
 
             const expandedCategories = expandCategory(category) || [];
 
@@ -82,23 +87,17 @@ export default function ClassificationClientPage() {
                 ? expandedClassifications.length
                 : expandedCategories.length * expandedClassifications.length;
 
-            // validationText.push([
-            //   `${classification}${nomenclature ? " " : ""}${nomenclature} - ${category} --->  ${classificationQuantity}\n`
-            // ]);
-
             validationText.push([
-              `${classification}${nomenclature ? " " : ""}${nomenclature}`,
+              `${productType.charAt(0).toUpperCase() + productType.slice(1)}`,
+              `${classification.replace("_", "-")}${
+                nomenclature ? " " : ""
+              }${nomenclature}`,
               `${category}`,
               `${classificationQuantity}`,
             ]);
 
             for (let x = 0; x < quantityForEachClassification; x++) {
               if (expandedCategories.length === 0) {
-                console.log(`Expanded Categories: ${expandedCategories}`);
-                console.log(
-                  `Expanded Classifications: ${expandedClassifications}`
-                );
-                console.log("Chegou aqui");
                 expandedClassifications.forEach((classificationValue) => {
                   csvContent.push([
                     `${classificationValue}${
@@ -124,7 +123,7 @@ export default function ClassificationClientPage() {
         );
 
         fileList.push({
-          fileName: sheet,
+          fileName: `${fileName} - ${sheet}.csv`,
           csvContent: csvContent,
           fileSize: new Blob([fileContent]).size,
         });
@@ -136,6 +135,14 @@ export default function ClassificationClientPage() {
 
       doc.table({
         data: validationText,
+
+        defaultStyle: {
+          margin: 1,
+          padding: 6,
+          fontSize: 12,
+          font: "Helvetica",
+          borderColor: "gray",
+        },
       });
 
       doc.end();
@@ -150,19 +157,8 @@ export default function ClassificationClientPage() {
             ...prev,
             ...fileList,
             {
-              fileName: "Arquivo de Conferencia.txt",
+              fileName: `${fileName} - Conferência.pdf`,
               fileSize: blob.size,
-              // validationFile: URL.createObjectURL(new Blob([validationText.toString().replace('/,/', '').replace("\"", "")], {
-              //   type: "text/plain",
-              //   encoding: "UTF-8"
-              // }))
-              // validationFile: URL.createObjectURL(new Blob([table(validationText, {
-              //   columnDefault: {
-              //     width: 50,
-              //     truncate: 49,
-              //     wrapWord: true
-              //   }
-              // }
               validationFile: validationFileURL,
             },
           ];
@@ -172,11 +168,9 @@ export default function ClassificationClientPage() {
       toast("Envio bem-sucedido", {
         description: `${selectedFile.name} foi processado com sucesso`,
       });
-      // }
 
       setSelectedFile(null);
 
-      // Reset the input
       const fileInput = document.getElementById("file-upload");
       if (fileInput) {
         fileInput.value = "";
@@ -209,7 +203,7 @@ export default function ClassificationClientPage() {
   };
 
   return (
-    <div className="max-h-screen bg-gray-50 py-8 px-4">
+    <div className="max-h-screen  py-8 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900">
@@ -319,7 +313,7 @@ export default function ClassificationClientPage() {
                           >
                             <CSVLink
                               data={csvContent}
-                              filename={`${fileName.split(".")[0]}.csv`}
+                              filename={`${fileName}`}
                               className="flex items-center"
                             >
                               <Download className="w-4 h-4 mr-1" />
@@ -331,7 +325,7 @@ export default function ClassificationClientPage() {
                           <Button variant="outline" size="sm" asChild>
                             <a
                               href={validationFile}
-                              download={`${fileName.split(".")[0]}.pdf`}
+                              download={`${fileName}`}
                               className="flex items-center"
                             >
                               <Download className="w-4 h-4 mr-1" />
@@ -339,9 +333,6 @@ export default function ClassificationClientPage() {
                             </a>
                           </Button>
                         )}
-                        {/* <Button variant="outline" size="sm" asChild>
-                        <a href={validationFile} download={`CONFERENCIA ${fileName}.txt`} ><EyeIcon className="w-4 h-4 mr-1" /></a>
-                      </Button> */}
                         <Button
                           variant="outline"
                           size="sm"

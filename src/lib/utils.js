@@ -5,19 +5,22 @@ function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-function expandClassification(value) {
+function expandClassification(value, nomenclature) {
   const cleaned = value.trim();
 
   if (cleaned.includes(",")) {
     return cleaned.split(",").map((x) => x.trim());
   }
 
-  if (cleaned.includes("-")) {
+  const nomenclaturePossibilitiesToUseO = ["LUGAR", "COLOCADO"]
 
-    console.log('Cleaned')
-    const [begin, end] = cleaned.split("-").map((x) => parseInt(x.trim()));
+  const ordinalSign = nomenclaturePossibilitiesToUseO.includes(nomenclature.toUpperCase()) ? "º" : "ª";
+
+  if (cleaned.includes("_")) {
+
+    const [begin, end] = cleaned.split("_").map((x) => parseInt(x.trim()));
     const results = [];
-    for (let i = begin; i <= end; i++) results.push(`${String(i)}º`);
+    for (let i = begin; i <= end; i++) results.push(`${String(i)}${ordinalSign}`);
     return results;
   }
 
@@ -37,10 +40,7 @@ const expandCategory = (category) => {
     .split("|")
     .map((block) => block.split("/").map((sub) => sub.trim()));
 
-  const i = cartesianProduct(blocks).map((combination) => combination.join(" "));
-
-  console.log('Cartesian Product: ', i)
-  return i;
+  return cartesianProduct(blocks).map((combination) => combination.join(" "));
 };
 
 function cartesianProduct(arrays) {
