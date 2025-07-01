@@ -20,37 +20,40 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="pt-BR">
       <body className={`${interSans.variable} antialiased bg-gray-50`}>
         {children}
         <Toaster />
 
-        {/* 
-        
-        ${c1}                             .:+o+/-.             
-                                `:oyys+:`         
-                                   .+syyyo-`      
-                    .:///+oss+.      .oyyyys:     
-                  -oyyyyyyyyyso`       /yyyyyo.   
-                -oyyyyyyyyys+-          :yyyyys-  
-             `-oyyyyyyyyyyo.             /yyyyyy- 
-           `-oyyyyyyyyyyyys/`            `syyyyys`
-          `oyyyyyyyyyyyyyyyys/`           /yyyyyy/
-           `/syyyyys/oyyyyyyyys/`         -yyyyyys
-             `/sys/`  -+yyyyyyyys/.       -yyyyyyy
-               `-`      -+syyyyyyys/.     /yyyyyys
-                          .+syyyyyyys+.  `syyyyyy/
-                            .+syyyyyyys+-oyyyyyys`
-        `-++-                 ./syyyyyyyyyyyyyys- 
-      ./syyyso/.                `/syyyyyyyyyyys-  
-    -+syyyyyyyyss+:.`            .:syyyyyyyyyy/   
- `:oyyyyyys+syyyyyyssso++/////+ossyyyyyyyyyyyyyo- 
-:syyyyyyo-` `:oyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyys:
-`/syys/.       `:+syyyyyyyyyyyyyyyyyys+:.:syyys/` 
-  `/:`             .-/+oossyysso+/:-`      :o/`   
-
-        */}
+        <div
+          dangerouslySetInnerHTML={{
+            __html: `<!--\n${[
+    "                             .:+o+/-.             ",
+    "                                `:oyys+:.         ",
+    "                                   .+syyyo-`      ",
+    "                    .:///+oss+.      .oyyyys:     ",
+    "                  -oyyyyyyyyyso`       /yyyyyo.   ",
+    "                -oyyyyyyyyys+-          :yyyyys-  ",
+    "             `-oyyyyyyyyyyo.             /yyyyyy- ",
+    "           `-oyyyyyyyyyyyys/`            `syyyyys`",
+    "          `oyyyyyyyyyyyyyyyys/`           /yyyyyy/",
+    "           `/syyyyys/oyyyyyyyys/`         -yyyyyys",
+    "             `/sys/`  -+yyyyyyyys/.       -yyyyyyy",
+    "               `-`      -+syyyyyyys/.     /yyyyyys",
+    "                          .+syyyyyyys+.  `syyyyyy/",
+    "                            .+syyyyyyys+-oyyyyyys`",
+    "        `-++-                 ./syyyyyyyyyyyyyys- ",
+    "      ./syyyso/.                `/syyyyyyyyyyys-  ",
+    "    -+syyyyyyyyss+:.`            .:syyyyyyyyyy/   ",
+    " `:oyyyyyys+syyyyyyssso++/////+ossyyyyyyyyyyyyyo- ",
+    ":syyyyyyo-` `:oyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyys:",
+    "`/syys/.       `:+syyyyyyyyyyyyyyyyyys+:.:syyys/` ",
+    "  `/:`             .-/+oossyysso+/:-`      :o/`  ",
+  ].join("\n")}\n-->`,
+          }}
+        />
       </body>
     </html>
   );
