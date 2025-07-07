@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,25 +20,46 @@ import blobStream from "blob-stream";
 
 import * as XLSX from "xlsx/xlsx.mjs";
 import { expandCategory, expandClassification } from "@/lib/utils";
+import { useForm } from "react-hook-form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function ClassificationClientPage() {
-  const [selectedFile, setSelectedFile] = useState(null);
+  // const [selectedFile, setSelectedFile] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleFileSelect = (event) => {
+  const form = useForm({
+    defaultValues: {
+      file: "",
+      isBelt: false,
+    },
+  });
+
+  const selectedFile = form.watch("file");
+
+  console.log("Watch: ", selectedFile);
+
+  const handleFileSelect = ({ event }) => {
     const file = event.target.files?.[0];
     if (file) {
-      setSelectedFile(file);
+      // setSelectedFile(file);
       toast("Arquivo escolhido", {
         description: `${file.name} está pronto para interpretação`,
       });
     }
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async ({ isBelt, file: selectedFile }) => {
+    // event.preventDefault();
 
+    console.log({ isBelt, selectedFile });
     if (!selectedFile) {
       toast.warning("Nenhum arquivo selecionado", {
         description: "Por favor, escolha um arquivo antes de gerar o CSV",
@@ -48,6 +69,9 @@ export default function ClassificationClientPage() {
 
     setIsUploading(true);
 
+    console.log("Selected File: ", selectedFile.name);
+    console.log("Selected File Buffer: ", selectedFile.arrayBuffer());
+
     try {
       const data = await selectedFile.arrayBuffer();
 
@@ -56,10 +80,150 @@ export default function ClassificationClientPage() {
       const workbook = XLSX.read(data);
 
       let fileList = [];
-      const validationText = [
-        ["Produto", "Classificação", "Categoria", "Quantidade"],
-      ];
+      const validationText = [["Classificação", "Categoria", "Quantidade"]];
 
+      if (isBelt) {
+        workbook.SheetNames.forEach((sheet, i) => {
+          const fileContent = XLSX.utils.sheet_to_json(
+            workbook.Sheets[workbook.SheetNames[i]]
+          );
+
+          const csvContent = [["Classificação", "Categoria"]];
+
+          fileContent.map(
+            ({
+              Quantidade: quantityForEachClassification,
+              Classificação: classification,
+              Categoria: category = "",
+              Nomeclatura: nomenclature = "",
+              Cor: color,
+            }) => {
+              console.log({ category, classification, nomenclature, color });
+              const expandedClassifications = expandClassification(
+                classification,
+                nomenclature
+              );
+
+              const expandedCategories = expandCategory(category) || [];
+
+              const classificationQuantity =
+                expandedCategories.length === 0
+                  ? expandedClassifications.length
+                  : expandedCategories.length * expandedClassifications.length;
+
+              validationText.push([
+                `${classification.replace("_", "-")}${
+                  nomenclature ? " " : ""
+                }${nomenclature}`,
+                `${category}`,
+                `${classificationQuantity}`,
+              ]);
+
+              for (let x = 0; x < quantityForEachClassification; x++) {
+                if (expandedCategories.length === 0) {
+                  expandedClassifications.forEach((classificationValue) => {
+                    csvContent.push([
+                      `${classificationValue}${
+                        nomenclature ? " " : ""
+                      }${nomenclature}`,
+                      "",
+                    ]);
+                  });
+                } else {
+                  expandedCategories.forEach((categoryValue) => {
+                    expandedClassifications.forEach((classificationValue) => {
+                      csvContent.push([
+                        `${classificationValue}${
+                          nomenclature ? " " : ""
+                        }${nomenclature}`,
+                        `${categoryValue}`,
+                      ]);
+                    });
+                  });
+                }
+              }
+            }
+          );
+
+          fileList.push({
+            fileName: `${fileName.replace(".", "")} - ${sheet}.csv`,
+            csvContent: Object.groupBy(csvContent, ({ category }) => category),
+            fileSize: new Blob([fileContent]).size,
+          });
+        });
+      }
+
+      if (!isBelt) {
+        workbook.SheetNames.forEach((sheet, i) => {
+          const fileContent = XLSX.utils.sheet_to_json(
+            workbook.Sheets[workbook.SheetNames[i]]
+          );
+
+          const csvContent = [["Classificação", "Categoria"]];
+
+          fileContent.map(
+            ({
+              Quantidade: quantityForEachClassification,
+              Classificação: classification,
+              Categoria: category = "",
+              Nomeclatura: nomenclature = "",
+              Produto: productType,
+            }) => {
+              console.log({ category, classification, nomenclature });
+              const expandedClassifications = expandClassification(
+                classification,
+                nomenclature
+              );
+
+              const expandedCategories = expandCategory(category) || [];
+
+              const classificationQuantity =
+                expandedCategories.length === 0
+                  ? expandedClassifications.length
+                  : expandedCategories.length * expandedClassifications.length;
+
+              validationText.push([
+                `${productType.charAt(0).toUpperCase() + productType.slice(1)}`,
+                `${classification.replace("_", "-")}${
+                  nomenclature ? " " : ""
+                }${nomenclature}`,
+                `${category}`,
+                `${classificationQuantity}`,
+              ]);
+
+              for (let x = 0; x < quantityForEachClassification; x++) {
+                if (expandedCategories.length === 0) {
+                  expandedClassifications.forEach((classificationValue) => {
+                    csvContent.push([
+                      `${classificationValue}${
+                        nomenclature ? " " : ""
+                      }${nomenclature}`,
+                      "",
+                    ]);
+                  });
+                } else {
+                  expandedCategories.forEach((categoryValue) => {
+                    expandedClassifications.forEach((classificationValue) => {
+                      csvContent.push([
+                        `${classificationValue}${
+                          nomenclature ? " " : ""
+                        }${nomenclature}`,
+                        `${categoryValue}`,
+                      ]);
+                    });
+                  });
+                }
+              }
+            }
+          );
+
+          fileList.push({
+            fileName: `${fileName.replace(".", "")} - ${sheet}.csv`,
+            csvContent: csvContent,
+            fileSize: new Blob([fileContent]).size,
+          });
+        });
+      }
       workbook.SheetNames.forEach((sheet, i) => {
         const fileContent = XLSX.utils.sheet_to_json(
           workbook.Sheets[workbook.SheetNames[i]]
@@ -69,12 +233,13 @@ export default function ClassificationClientPage() {
 
         fileContent.map(
           ({
-            quantityForEachClassification,
-            classification,
-            category = "",
-            nomenclature = "",
-            productType,
+            Quantidade: quantityForEachClassification,
+            Classificação: classification,
+            Categoria: category = "",
+            Nomeclatura: nomenclature = "",
+            Produto: productType,
           }) => {
+            console.log({ category, classification, nomenclature });
             const expandedClassifications = expandClassification(
               classification,
               nomenclature
@@ -123,7 +288,7 @@ export default function ClassificationClientPage() {
         );
 
         fileList.push({
-          fileName: `${fileName} - ${sheet}.csv`,
+          fileName: `${fileName.replace(".", "")} - ${sheet}.csv`,
           csvContent: csvContent,
           fileSize: new Blob([fileContent]).size,
         });
@@ -157,7 +322,7 @@ export default function ClassificationClientPage() {
             ...prev,
             ...fileList,
             {
-              fileName: `${fileName} - Conferência.pdf`,
+              fileName: `${fileName.replace(".", "")} - Conferência.pdf`,
               fileSize: blob.size,
               validationFile: validationFileURL,
             },
@@ -221,7 +386,93 @@ export default function ClassificationClientPage() {
             <CardDescription>Selecione um arquivo para enviar</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(handleSubmit)}
+                className="space-y-4"
+              >
+                <div className="space-y-2">
+                  <FormField
+                    control={form.control}
+                    name="file"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="file-upload">
+                          Escolha um arquivo{" "}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            id="file-upload"
+                            type="file"
+                            // onChange={handleFileSelect}
+                            // {...field}
+                            onChange={(e) => field.onChange(e.target.files[0])}
+                            className="cursor-pointer"
+                            accept=".xlsx"
+                          />
+                        </FormControl>
+                        {/* <FormDescription /> */}
+                        {/* <FormMessage /> */}
+                      </FormItem>
+                    )}
+                  />
+                  {selectedFile && (
+                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm font-medium text-blue-900">
+                          {selectedFile.name}
+                        </span>
+                        <span className="text-xs text-blue-600">
+                          ({formatFileSize(selectedFile.size)})
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <FormField
+                    control={form.control}
+                    name="isBelt"
+                    render={({ field }) => {
+                      return (
+                        <FormItem className="flex flex-row items-center gap-2">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="text-sm font-normal">
+                            Faixa Sublimada
+                          </FormLabel>
+                        </FormItem>
+                      );
+                    }}
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={!selectedFile || isUploading}
+                  className="w-full"
+                >
+                  {isUploading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Enviar classificação
+                    </>
+                  )}
+                </Button>
+              </form>
+            </Form>
+
+            {/* <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="file-upload">Escolha um arquivo</Label>
                 <Input
@@ -231,9 +482,9 @@ export default function ClassificationClientPage() {
                   className="cursor-pointer"
                   accept=".xlsx"
                 />
-              </div>
+              </div> */}
 
-              {selectedFile && (
+            {/* {selectedFile && (
                 <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-blue-600" />
@@ -245,9 +496,9 @@ export default function ClassificationClientPage() {
                     </span>
                   </div>
                 </div>
-              )}
+              )} */}
 
-              <Button
+            {/* <Button
                 type="submit"
                 disabled={!selectedFile || isUploading}
                 className="w-full"
@@ -263,8 +514,8 @@ export default function ClassificationClientPage() {
                     Enviar classificação
                   </>
                 )}
-              </Button>
-            </form>
+              </Button> */}
+            {/* </form> */}
           </CardContent>
         </Card>
 
