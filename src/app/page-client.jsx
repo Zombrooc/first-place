@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -35,6 +35,8 @@ export default function ClassificationClientPage() {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
 
+  const [ isPending, startTransition] = useTransition()
+
   const form = useForm({
     defaultValues: {
       file: "",
@@ -43,8 +45,6 @@ export default function ClassificationClientPage() {
   });
 
   const selectedFile = form.watch("file");
-
-  console.log("Watch: ", selectedFile);
 
   const handleFileSelect = ({ event }) => {
     const file = event.target.files?.[0];
@@ -59,7 +59,6 @@ export default function ClassificationClientPage() {
   const handleSubmit = async ({ isBelt, file: selectedFile }) => {
     // event.preventDefault();
 
-    console.log({ isBelt, selectedFile });
     if (!selectedFile) {
       toast.warning("Nenhum arquivo selecionado", {
         description: "Por favor, escolha um arquivo antes de gerar o CSV",
@@ -69,9 +68,6 @@ export default function ClassificationClientPage() {
 
     setIsUploading(true);
 
-    console.log("Selected File: ", selectedFile.name);
-    console.log("Selected File Buffer: ", selectedFile.arrayBuffer());
-
     try {
       const data = await selectedFile.arrayBuffer();
 
@@ -80,7 +76,9 @@ export default function ClassificationClientPage() {
       const workbook = XLSX.read(data);
 
       let fileList = [];
-      const validationText = [["Classificação", "Categoria", "Quantidade"]];
+      const validationText = [
+        ["Produto", "Classificação", "Categoria", "Quantidade"],
+      ];
 
       if (isBelt) {
         workbook.SheetNames.forEach((sheet, i) => {
@@ -90,6 +88,9 @@ export default function ClassificationClientPage() {
 
           const csvContent = [["Classificação", "Categoria"]];
 
+          let unorganizedCSV = [];
+          let beltColors = [];
+
           fileContent.map(
             ({
               Quantidade: quantityForEachClassification,
@@ -98,11 +99,12 @@ export default function ClassificationClientPage() {
               Nomeclatura: nomenclature = "",
               Cor: color,
             }) => {
-              console.log({ category, classification, nomenclature, color });
               const expandedClassifications = expandClassification(
                 classification,
                 nomenclature
               );
+
+              beltColors.push(color);
 
               const expandedCategories = expandCategory(category) || [];
 
@@ -112,6 +114,7 @@ export default function ClassificationClientPage() {
                   : expandedCategories.length * expandedClassifications.length;
 
               validationText.push([
+                `${color.charAt(0).toUpperCase() + color.slice(1)}`,
                 `${classification.replace("_", "-")}${
                   nomenclature ? " " : ""
                 }${nomenclature}`,
@@ -122,22 +125,24 @@ export default function ClassificationClientPage() {
               for (let x = 0; x < quantityForEachClassification; x++) {
                 if (expandedCategories.length === 0) {
                   expandedClassifications.forEach((classificationValue) => {
-                    csvContent.push([
-                      `${classificationValue}${
+                    unorganizedCSV.push({
+                      classification: `${classificationValue}${
                         nomenclature ? " " : ""
                       }${nomenclature}`,
-                      "",
-                    ]);
+                      category: "",
+                      color,
+                    });
                   });
                 } else {
                   expandedCategories.forEach((categoryValue) => {
                     expandedClassifications.forEach((classificationValue) => {
-                      csvContent.push([
-                        `${classificationValue}${
+                      unorganizedCSV.push({
+                        classification: `${classificationValue}${
                           nomenclature ? " " : ""
                         }${nomenclature}`,
-                        `${categoryValue}`,
-                      ]);
+                        category: `${categoryValue}`,
+                        color,
+                      });
                     });
                   });
                 }
@@ -145,10 +150,22 @@ export default function ClassificationClientPage() {
             }
           );
 
-          fileList.push({
-            fileName: `${fileName.replace(".", "")} - ${sheet}.csv`,
-            csvContent: Object.groupBy(csvContent, ({ category }) => category),
-            fileSize: new Blob([fileContent]).size,
+          beltColors.map((color) => {
+            const csvContent = [["Classificação", "Categoria"]];
+            const filteredCSV = unorganizedCSV.filter(
+              ({ color: sColor }) => sColor === color
+            );
+
+            filteredCSV.map(({ classification, category }) =>
+              csvContent.push([classification, category])
+            );
+
+            fileList.push({
+              fileName: `${fileName.replace(".", "")} - ${color}.csv`,
+              csvContent,
+              fileSize: new Blob([csvContent]).size,
+            });
+            console.log("Filtered CSV: ", filteredCSV);
           });
         });
       }
@@ -176,6 +193,7 @@ export default function ClassificationClientPage() {
               );
 
               const expandedCategories = expandCategory(category) || [];
+              console.log("Expanded Categories:", expandedCategories);
 
               const classificationQuantity =
                 expandedCategories.length === 0
@@ -224,86 +242,86 @@ export default function ClassificationClientPage() {
           });
         });
       }
-      workbook.SheetNames.forEach((sheet, i) => {
-        const fileContent = XLSX.utils.sheet_to_json(
-          workbook.Sheets[workbook.SheetNames[i]]
-        );
+      // workbook.SheetNames.forEach((sheet, i) => {
+      //   const fileContent = XLSX.utils.sheet_to_json(
+      //     workbook.Sheets[workbook.SheetNames[i]]
+      //   );
 
-        const csvContent = [["Classificação", "Categoria"]];
+      //   const csvContent = [["Classificação", "Categoria"]];
 
-        fileContent.map(
-          ({
-            Quantidade: quantityForEachClassification,
-            Classificação: classification,
-            Categoria: category = "",
-            Nomeclatura: nomenclature = "",
-            Produto: productType,
-          }) => {
-            console.log({ category, classification, nomenclature });
-            const expandedClassifications = expandClassification(
-              classification,
-              nomenclature
-            );
+      //   fileContent.map(
+      //     ({
+      //       Quantidade: quantityForEachClassification,
+      //       Classificação: classification,
+      //       Categoria: category = "",
+      //       Nomeclatura: nomenclature = "",
+      //       Produto: productType,
+      //     }) => {
+      //       console.log({ category, classification, nomenclature });
+      //       const expandedClassifications = expandClassification(
+      //         classification,
+      //         nomenclature
+      //       );
 
-            const expandedCategories = expandCategory(category) || [];
+      //       const expandedCategories = expandCategory(category) || [];
 
-            const classificationQuantity =
-              expandedCategories.length === 0
-                ? expandedClassifications.length
-                : expandedCategories.length * expandedClassifications.length;
+      //       const classificationQuantity =
+      //         expandedCategories.length === 0
+      //           ? expandedClassifications.length
+      //           : expandedCategories.length * expandedClassifications.length;
 
-            validationText.push([
-              `${productType.charAt(0).toUpperCase() + productType.slice(1)}`,
-              `${classification.replace("_", "-")}${
-                nomenclature ? " " : ""
-              }${nomenclature}`,
-              `${category}`,
-              `${classificationQuantity}`,
-            ]);
+      //       validationText.push([
+      //         `${productType.charAt(0).toUpperCase() + productType.slice(1)}`,
+      //         `${classification.replace("_", "-")}${
+      //           nomenclature ? " " : ""
+      //         }${nomenclature}`,
+      //         `${category}`,
+      //         `${classificationQuantity}`,
+      //       ]);
 
-            for (let x = 0; x < quantityForEachClassification; x++) {
-              if (expandedCategories.length === 0) {
-                expandedClassifications.forEach((classificationValue) => {
-                  csvContent.push([
-                    `${classificationValue}${
-                      nomenclature ? " " : ""
-                    }${nomenclature}`,
-                    "",
-                  ]);
-                });
-              } else {
-                expandedCategories.forEach((categoryValue) => {
-                  expandedClassifications.forEach((classificationValue) => {
-                    csvContent.push([
-                      `${classificationValue}${
-                        nomenclature ? " " : ""
-                      }${nomenclature}`,
-                      `${categoryValue}`,
-                    ]);
-                  });
-                });
-              }
-            }
-          }
-        );
+      //       for (let x = 0; x < quantityForEachClassification; x++) {
+      //         if (expandedCategories.length === 0) {
+      //           expandedClassifications.forEach((classificationValue) => {
+      //             csvContent.push([
+      //               `${classificationValue}${
+      //                 nomenclature ? " " : ""
+      //               }${nomenclature}`,
+      //               "",
+      //             ]);
+      //           });
+      //         } else {
+      //           expandedCategories.forEach((categoryValue) => {
+      //             expandedClassifications.forEach((classificationValue) => {
+      //               csvContent.push([
+      //                 `${classificationValue}${
+      //                   nomenclature ? " " : ""
+      //                 }${nomenclature}`,
+      //                 `${categoryValue}`,
+      //               ]);
+      //             });
+      //           });
+      //         }
+      //       }
+      //     }
+      //   );
 
-        fileList.push({
-          fileName: `${fileName.replace(".", "")} - ${sheet}.csv`,
-          csvContent: csvContent,
-          fileSize: new Blob([fileContent]).size,
-        });
-      });
+      //   fileList.push({
+      //     fileName: `${fileName.replace(".", "")} - ${sheet}.csv`,
+      //     csvContent: csvContent,
+      //     fileSize: new Blob([fileContent]).size,
+      //   });
+      // });
 
       const doc = new PDFDocument();
 
       const stream = doc.pipe(blobStream());
 
+      console.log(validationText);
+
       doc.table({
         data: validationText,
-
         defaultStyle: {
-          margin: 1,
-          padding: 6,
+          margin: 0.5,
           fontSize: 12,
           font: "Helvetica",
           borderColor: "gray",
@@ -334,12 +352,11 @@ export default function ClassificationClientPage() {
         description: `${selectedFile.name} foi processado com sucesso`,
       });
 
-      setSelectedFile(null);
-
       const fileInput = document.getElementById("file-upload");
       if (fileInput) {
         fileInput.value = "";
       }
+      form.reset();
     } catch (error) {
       console.log(error);
       toast.warning("Erro!", {
