@@ -1,4 +1,3 @@
-
 const PAGE_WIDTH = 1200;
 
 const mmToPoints = (mm) => {

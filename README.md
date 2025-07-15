@@ -41,7 +41,7 @@ A planilha contém as seguintes colunas:
 
 A coluna **Categoria** aceita variações que são automaticamente expandidas. Exemplos:
 
-```js
+\`\`\`js
 expandCategories("Geral")
 // → ["Geral"]
 
@@ -53,7 +53,7 @@ expandCategories("Geral | Feminino/Masculino")
 
 expandCategories("Regional | Sul/Sudeste | Masculino/Feminino")
 // → ["Regional Sul Masculino", "Regional Sul Feminino", "Regional Sudeste Masculino", "Regional Sudeste Feminino"]
-````
+\`\`\``
 
 ### Classificações
 
