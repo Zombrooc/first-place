@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,16 +10,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Upload, Download, FileText, X } from "lucide-react";
+import { Upload, Download, FileText, X, AlertCircleIcon } from "lucide-react";
 
 import { toast } from "sonner";
-import PDFDocument from "pdfkit/js/pdfkit.standalone.js";
-import { CSVLink } from "react-csv";
-import blobStream from "blob-stream";
 
-import * as XLSX from "xlsx/xlsx.mjs";
-import { expandCategory, expandClassification } from "@/lib/utils";
+import { CSVLink } from "react-csv";
+
+import { formatFileSize } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import {
   Form,
@@ -29,13 +26,13 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function ClassificationClientPage() {
-  // const [selectedFile, setSelectedFile] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  const [ isPending, startTransition] = useTransition()
+  const [errors, setErrors] = useState([]);
 
   const form = useForm({
     defaultValues: {
@@ -46,325 +43,51 @@ export default function ClassificationClientPage() {
 
   const selectedFile = form.watch("file");
 
-  const handleFileSelect = ({ event }) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // setSelectedFile(file);
+  useEffect(() => {
+    if (selectedFile) {
       toast("Arquivo escolhido", {
-        description: `${file.name} está pronto para interpretação`,
+        description: `${selectedFile.name} está pronto para interpretação`,
       });
     }
-  };
+  }, [selectedFile]);
 
   const handleSubmit = async ({ isBelt, file: selectedFile }) => {
-    // event.preventDefault();
-
-    if (!selectedFile) {
-      toast.warning("Nenhum arquivo selecionado", {
-        description: "Por favor, escolha um arquivo antes de gerar o CSV",
-      });
-      return;
-    }
-
     setIsUploading(true);
 
-    try {
-      const data = await selectedFile.arrayBuffer();
+    const fd = new FormData();
+    fd.append("isBelt", String(isBelt));
+    fd.append("file", selectedFile); // único file
 
-      const [fileName, fileExtension] = selectedFile.name.split(".");
+    const { fileList, error } = await fetch("/api/classification", {
+      method: "POST",
+      body: fd,
+    }).then((res) => res.json());
 
-      const workbook = XLSX.read(data);
-
-      let fileList = [];
-      const validationText = [
-        ["Produto", "Classificação", "Categoria", "Quantidade"],
-      ];
-
-      if (isBelt) {
-        workbook.SheetNames.forEach((sheet, i) => {
-          const fileContent = XLSX.utils.sheet_to_json(
-            workbook.Sheets[workbook.SheetNames[i]]
-          );
-
-          const csvContent = [["Classificação", "Categoria"]];
-
-          let unorganizedCSV = [];
-          let beltColors = [];
-
-          fileContent.map(
-            ({
-              Quantidade: quantityForEachClassification,
-              Classificação: classification,
-              Categoria: category = "",
-              Nomeclatura: nomenclature = "",
-              Cor: color,
-            }) => {
-              const expandedClassifications = expandClassification(
-                classification,
-                nomenclature
-              );
-
-              beltColors.push(color);
-
-              const expandedCategories = expandCategory(category) || [];
-
-              const classificationQuantity =
-                expandedCategories.length === 0
-                  ? expandedClassifications.length
-                  : expandedCategories.length * expandedClassifications.length;
-
-              validationText.push([
-                `${color.charAt(0).toUpperCase() + color.slice(1)}`,
-                `${classification.replace("_", "-")}${
-                  nomenclature ? " " : ""
-                }${nomenclature}`,
-                `${category}`,
-                `${classificationQuantity}`,
-              ]);
-
-              for (let x = 0; x < quantityForEachClassification; x++) {
-                if (expandedCategories.length === 0) {
-                  expandedClassifications.forEach((classificationValue) => {
-                    unorganizedCSV.push({
-                      classification: `${classificationValue}${
-                        nomenclature ? " " : ""
-                      }${nomenclature}`,
-                      category: "",
-                      color,
-                    });
-                  });
-                } else {
-                  expandedCategories.forEach((categoryValue) => {
-                    expandedClassifications.forEach((classificationValue) => {
-                      unorganizedCSV.push({
-                        classification: `${classificationValue}${
-                          nomenclature ? " " : ""
-                        }${nomenclature}`,
-                        category: `${categoryValue}`,
-                        color,
-                      });
-                    });
-                  });
-                }
-              }
-            }
-          );
-
-          beltColors.map((color) => {
-            const csvContent = [["Classificação", "Categoria"]];
-            const filteredCSV = unorganizedCSV.filter(
-              ({ color: sColor }) => sColor === color
-            );
-
-            filteredCSV.map(({ classification, category }) =>
-              csvContent.push([classification, category])
-            );
-
-            fileList.push({
-              fileName: `${fileName.replace(".", "")} - ${color}.csv`,
-              csvContent,
-              fileSize: new Blob([csvContent]).size,
-            });
-            console.log("Filtered CSV: ", filteredCSV);
-          });
-        });
-      }
-
-      if (!isBelt) {
-        workbook.SheetNames.forEach((sheet, i) => {
-          const fileContent = XLSX.utils.sheet_to_json(
-            workbook.Sheets[workbook.SheetNames[i]]
-          );
-
-          const csvContent = [["Classificação", "Categoria"]];
-
-          fileContent.map(
-            ({
-              Quantidade: quantityForEachClassification,
-              Classificação: classification,
-              Categoria: category = "",
-              Nomeclatura: nomenclature = "",
-              Produto: productType,
-            }) => {
-              console.log({ category, classification, nomenclature });
-              const expandedClassifications = expandClassification(
-                classification,
-                nomenclature
-              );
-
-              const expandedCategories = expandCategory(category) || [];
-              console.log("Expanded Categories:", expandedCategories);
-
-              const classificationQuantity =
-                expandedCategories.length === 0
-                  ? expandedClassifications.length
-                  : expandedCategories.length * expandedClassifications.length;
-
-              validationText.push([
-                `${productType.charAt(0).toUpperCase() + productType.slice(1)}`,
-                `${classification.replace("_", "-")}${
-                  nomenclature ? " " : ""
-                }${nomenclature}`,
-                `${category}`,
-                `${classificationQuantity}`,
-              ]);
-
-              for (let x = 0; x < quantityForEachClassification; x++) {
-                if (expandedCategories.length === 0) {
-                  expandedClassifications.forEach((classificationValue) => {
-                    csvContent.push([
-                      `${classificationValue}${
-                        nomenclature ? " " : ""
-                      }${nomenclature}`,
-                      "",
-                    ]);
-                  });
-                } else {
-                  expandedCategories.forEach((categoryValue) => {
-                    expandedClassifications.forEach((classificationValue) => {
-                      csvContent.push([
-                        `${classificationValue}${
-                          nomenclature ? " " : ""
-                        }${nomenclature}`,
-                        `${categoryValue}`,
-                      ]);
-                    });
-                  });
-                }
-              }
-            }
-          );
-
-          fileList.push({
-            fileName: `${fileName.replace(".", "")} - ${sheet}.csv`,
-            csvContent: csvContent,
-            fileSize: new Blob([fileContent]).size,
-          });
-        });
-      }
-      // workbook.SheetNames.forEach((sheet, i) => {
-      //   const fileContent = XLSX.utils.sheet_to_json(
-      //     workbook.Sheets[workbook.SheetNames[i]]
-      //   );
-
-      //   const csvContent = [["Classificação", "Categoria"]];
-
-      //   fileContent.map(
-      //     ({
-      //       Quantidade: quantityForEachClassification,
-      //       Classificação: classification,
-      //       Categoria: category = "",
-      //       Nomeclatura: nomenclature = "",
-      //       Produto: productType,
-      //     }) => {
-      //       console.log({ category, classification, nomenclature });
-      //       const expandedClassifications = expandClassification(
-      //         classification,
-      //         nomenclature
-      //       );
-
-      //       const expandedCategories = expandCategory(category) || [];
-
-      //       const classificationQuantity =
-      //         expandedCategories.length === 0
-      //           ? expandedClassifications.length
-      //           : expandedCategories.length * expandedClassifications.length;
-
-      //       validationText.push([
-      //         `${productType.charAt(0).toUpperCase() + productType.slice(1)}`,
-      //         `${classification.replace("_", "-")}${
-      //           nomenclature ? " " : ""
-      //         }${nomenclature}`,
-      //         `${category}`,
-      //         `${classificationQuantity}`,
-      //       ]);
-
-      //       for (let x = 0; x < quantityForEachClassification; x++) {
-      //         if (expandedCategories.length === 0) {
-      //           expandedClassifications.forEach((classificationValue) => {
-      //             csvContent.push([
-      //               `${classificationValue}${
-      //                 nomenclature ? " " : ""
-      //               }${nomenclature}`,
-      //               "",
-      //             ]);
-      //           });
-      //         } else {
-      //           expandedCategories.forEach((categoryValue) => {
-      //             expandedClassifications.forEach((classificationValue) => {
-      //               csvContent.push([
-      //                 `${classificationValue}${
-      //                   nomenclature ? " " : ""
-      //                 }${nomenclature}`,
-      //                 `${categoryValue}`,
-      //               ]);
-      //             });
-      //           });
-      //         }
-      //       }
-      //     }
-      //   );
-
-      //   fileList.push({
-      //     fileName: `${fileName.replace(".", "")} - ${sheet}.csv`,
-      //     csvContent: csvContent,
-      //     fileSize: new Blob([fileContent]).size,
-      //   });
-      // });
-
-      const doc = new PDFDocument();
-
-      const stream = doc.pipe(blobStream());
-
-      console.log(validationText);
-
-      doc.table({
-        data: validationText,
-        defaultStyle: {
-          margin: 0.5,
-          fontSize: 12,
-          font: "Helvetica",
-          borderColor: "gray",
-        },
-      });
-
-      doc.end();
-
-      stream.on("finish", function () {
-        const blob = stream.toBlob("application/pdf");
-
-        let validationFileURL = stream.toBlobURL("application/pdf");
-
-        setUploadedFiles((prev) => {
-          return [
-            ...prev,
-            ...fileList,
-            {
-              fileName: `${fileName.replace(".", "")} - Conferência.pdf`,
-              fileSize: blob.size,
-              validationFile: validationFileURL,
-            },
-          ];
-        });
-      });
-
-      toast("Envio bem-sucedido", {
-        description: `${selectedFile.name} foi processado com sucesso`,
-      });
-
-      const fileInput = document.getElementById("file-upload");
-      if (fileInput) {
-        fileInput.value = "";
-      }
-      form.reset();
-    } catch (error) {
-      console.log(error);
+    if (error.length > 0) {
       toast.warning("Erro!", {
         description: "Houve um erro ao tentar fazer upload",
       });
-    } finally {
-      setIsUploading(false);
+
+      setErrors(error);
+      setLoading(false);
+      return;
     }
+
+    setUploadedFiles((prev) => [...prev, ...fileList]);
+
+    const fileInput = document.getElementById("file-upload");
+    if (fileInput) {
+      fileInput.value = "";
+    }
+
+    form.reset();
+
+    toast.success("Arquivo processado com sucesso", {
+      description: `${selectedFile.name} foi processado com sucesso`,
+    });
+
+    setIsUploading(false);
+    return;
   };
 
   const removeFile = (index) => {
@@ -372,16 +95,6 @@ export default function ClassificationClientPage() {
     toast("Arquivo removido", {
       description: "Classificação removida.",
     });
-  };
-
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return (
-      Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
-    );
   };
 
   return (
@@ -403,6 +116,26 @@ export default function ClassificationClientPage() {
             <CardDescription>Selecione um arquivo para enviar</CardDescription>
           </CardHeader>
           <CardContent>
+            {errors.length > 0 && (
+              <Alert variant="destructive">
+                <AlertCircleIcon />
+                <AlertTitle>
+                  Não foi possível processar o arquivo selecionado.
+                </AlertTitle>
+                <AlertDescription>
+                  <p>
+                    Por favor, verifique as informações do arquivo e tente
+                    novamente.
+                  </p>
+
+                  <ul className="my-6 ml-6 list-disc [&>li]:mt-2">
+                    {errors.map((error, i) => {
+                      return <li key={i}>{error}</li>;
+                    })}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(handleSubmit)}
@@ -421,15 +154,11 @@ export default function ClassificationClientPage() {
                           <Input
                             id="file-upload"
                             type="file"
-                            // onChange={handleFileSelect}
-                            // {...field}
                             onChange={(e) => field.onChange(e.target.files[0])}
                             className="cursor-pointer"
                             accept=".xlsx"
                           />
                         </FormControl>
-                        {/* <FormDescription /> */}
-                        {/* <FormMessage /> */}
                       </FormItem>
                     )}
                   />
@@ -460,7 +189,10 @@ export default function ClassificationClientPage() {
                               onCheckedChange={field.onChange}
                             />
                           </FormControl>
-                          <FormLabel className="text-sm font-normal">
+                          <FormLabel
+                            className="text-sm font-normal"
+                            htmlFor="isBelt"
+                          >
                             Faixa Sublimada
                           </FormLabel>
                         </FormItem>
@@ -488,51 +220,6 @@ export default function ClassificationClientPage() {
                 </Button>
               </form>
             </Form>
-
-            {/* <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="file-upload">Escolha um arquivo</Label>
-                <Input
-                  id="file-upload"
-                  type="file"
-                  onChange={handleFileSelect}
-                  className="cursor-pointer"
-                  accept=".xlsx"
-                />
-              </div> */}
-
-            {/* {selectedFile && (
-                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-900">
-                      {selectedFile.name}
-                    </span>
-                    <span className="text-xs text-blue-600">
-                      ({formatFileSize(selectedFile.size)})
-                    </span>
-                  </div>
-                </div>
-              )} */}
-
-            {/* <Button
-                type="submit"
-                disabled={!selectedFile || isUploading}
-                className="w-full"
-              >
-                {isUploading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Enviando...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Enviar classificação
-                  </>
-                )}
-              </Button> */}
-            {/* </form> */}
           </CardContent>
         </Card>
 
@@ -573,12 +260,7 @@ export default function ClassificationClientPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         {csvContent && csvContent.length > 0 && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            // onClick={() => handleDownload(file)}
-                            asChild
-                          >
+                          <Button variant="outline" size="sm" asChild>
                             <CSVLink
                               data={csvContent}
                               filename={`${fileName}`}
@@ -592,7 +274,21 @@ export default function ClassificationClientPage() {
                         {validationFile && (
                           <Button variant="outline" size="sm" asChild>
                             <a
-                              href={validationFile}
+                              href={
+                                typeof validationFile === "string"
+                                  ? URL.createObjectURL(
+                                      new Blob(
+                                        [
+                                          Uint8Array.from(
+                                            atob(validationFile),
+                                            (c) => c.charCodeAt(0)
+                                          ),
+                                        ],
+                                        { type: "application/pdf" }
+                                      )
+                                    )
+                                  : URL.createObjectURL(validationFile)
+                              }
                               download={`${fileName}`}
                               className="flex items-center"
                             >
