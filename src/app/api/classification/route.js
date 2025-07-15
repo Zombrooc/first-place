@@ -16,7 +16,7 @@ export async function POST(req) {
   const selectedFile = formData.get('file')
 
   if (!selectedFile) {
-    return { fileList: [], error: ['Arquivo inválido'] };
+    return Respose.json({ fileList: [], error: ['Arquivo inválido'] });
   }
 
   try {
