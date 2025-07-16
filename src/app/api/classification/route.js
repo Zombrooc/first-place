@@ -90,9 +90,9 @@ export async function POST(req) {
             const expandedCategories = expandCategory(category) || [];
 
             const classificationQuantity =
-              expandedCategories.length === 0
+              (expandedCategories.length === 0
                 ? expandedClassifications.length
-                : expandedCategories.length * expandedClassifications.length;
+                : expandedCategories.length * expandedClassifications.length) * quantityForEachClassification;
 
             validationText.push([
               `${color.charAt(0).toUpperCase() + color.slice(1)}`,
@@ -164,8 +164,6 @@ export async function POST(req) {
 
         const missing = required.filter(h => !headers.includes(h));
 
-        console.log('Missing: ', missing)
-
         if (missing.length > 0) {
           const sheetName = workbook.SheetNames[i]
           missingColumns = {
@@ -206,9 +204,9 @@ export async function POST(req) {
             const expandedCategories = expandCategory(category) || [];
 
             const classificationQuantity =
-              expandedCategories.length === 0
+              (expandedCategories.length === 0
                 ? expandedClassifications.length
-                : expandedCategories.length * expandedClassifications.length;
+                : expandedCategories.length * expandedClassifications.length) * quantityForEachClassification;
 
             validationText.push([
               `${productType.charAt(0).toUpperCase() + productType.slice(1)}`,
